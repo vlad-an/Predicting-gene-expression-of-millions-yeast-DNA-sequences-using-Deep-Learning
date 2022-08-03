@@ -7,19 +7,10 @@ I used uniformed and shuffled train data (around 440 000 sequences) to process i
 File 2 - Uniform data:
 Here I was taking original given data and uniforming them by setting a certain threshold - certain number of sequences for each bin, to mitigate low count of sequences in low bins.
 
-File 3 - DNA seq SHAP: 
+File 3 - Computational Experiments, SHAp scores: 
 Here is where I did all the experiments. I took the best model, took the uniformed shuffled data, and conducted positioning experiments, spacing experiments, individiual bases experiments, experiment where I keep both motifs and then delete one and the other and so on. Also, shap importances are calculated here and corresponding logos plotted.
 
-File 4 - Modisco:
-I started generating h5py file
-
-File 5 - Modisco file:
-I took Charle's example and generated the final h5py file to give to Modisco.
-
-File 6 - Kmer Analyses:
-Just took the file we wrote in the shell and extracted the correlations for all the fivemers we tested. Looked at the outlier with highest correlation and ti was reb1 fragment.
-
-File 7 - DNA seq:
-Did some preliminary data analyses. Checked if there is correlation between AT or GC content and expression, lengths of a sequence and expression, having and not having reb1 or rap1 motifs and expression.
+File 4 - Preliminary Data Analyses:
+Checked if there is correlation between AT or GC content and expression, lengths of a sequence and expression, having and not having reb1 or rap1 motifs and expression.
 
 
