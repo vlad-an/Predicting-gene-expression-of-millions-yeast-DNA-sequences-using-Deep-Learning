@@ -1,12 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-
-
-
 # In[1]:
 
 
@@ -36,8 +27,6 @@ for i in range(len(data)):
     score.append(float(data[i][1]))
     
     
-#print(seq)
-#print(score)
 
 
 # In[ ]:
