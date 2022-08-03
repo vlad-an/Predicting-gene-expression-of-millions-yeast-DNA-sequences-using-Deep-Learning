@@ -1,21 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from tensorflow import keras
-
-
-# In[423]:
-
-
 import re
-
-
-# In[2]:
-
-
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 from tensorflow import keras
@@ -30,31 +14,21 @@ from tensorflow import keras
 import math
 import re
 from sklearn.metrics import r2_score 
-
-
-# In[ ]:
-
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+get_ipython().run_line_magic('matplotlib', 'inline')
+plt.ion()
+import logomaker as lm
 
 #load the best model
 model = keras.models.load_model('Trial_5.model')
 
-
-# In[4]:
-
-
 #load uniformed shuffled data
 data_uni= np.loadtxt("uniformed_shuffled.txt", dtype=str)
 
-
-# In[5]:
-
-
 #load test sequences
 data_test= np.loadtxt("test_sequences.txt", dtype=str)
-
-
-# In[8]:
-
 
 #separate data into sequences and scores
 seq_uni=[]
@@ -63,46 +37,6 @@ for i in range(len(data_uni)):
     seq_uni.append(data_uni[i][0])
     score_uni.append(float(data_uni[i][1]) / 18)
 
-
-# In[826]:
-
-
-#store model predictions for test sequences
-test_scores=[]
-test_batches=DNAseqload(seq_test)
-test_scores.append(model.predict(test_batches,verbose=2))
-
-
-# In[846]:
-
-
-#create a list of model test predictions
-test_scores_list=[]
-for i in range(len(test_scores[0])): 
-    test_scores_list.append(test_scores[0][i][0])
-
-
-# In[855]:
-
-
-#create a list of test sequences and scores in the right format for submission
-newList = list()
-for i in range(len(seq_test)):
-    newList.append(seq_test[i])
-    newList.append(test_scores_list[i])
-print(newList)
-
-
-# In[864]:
-
-
-#write sequences and scores into a submission file
-with open("Model Test.txt", "w") as f:
-    for x in newList:
-        f.write(str(x) + "\n")
-
-
-# In[11]:
 
 
 #function that onehotencodes sequences
@@ -114,9 +48,6 @@ def one_hot_encode(sequence):
     table[:,2]=(ordseq==ord('G'))
     table[:,3]=(ordseq==ord('T'))
     return table
-
-
-# In[12]:
 
 
 #function that makes sequences of equal length 135bp and onehotencodes them
@@ -141,17 +72,10 @@ def Equal_Len(seqs,seq_resize_encoded)   :
                     seq_resize_encoded.append(seq_encoded)
     return seq_resize_encoded
 
-
-# In[13]:
-
-
 #vector parts that were used to elongate short sequences
 right_DNA_str='TCTTAATTAAAAAAAGATAGAAAACATTAGGAGT'
 
 left_DNA_str='CTAGCAGGAATGATGCAAAAGGTTCCCGATTCGAAC'
-
-
-# In[14]:
 
 
 #function that only elongates sequences to 135bp
@@ -173,9 +97,6 @@ def Resized(seqs,seq_resized)   :
     return seq_resized
 
 
-# In[779]:
-
-
 #function that elongtes sequences to 80 bp
 def Resized_80(seqs,seq_resized)   :  
     for i,seq in enumerate(tqdm.tqdm(seqs)):
@@ -192,17 +113,10 @@ def Resized_80(seqs,seq_resized)   :
                     seq_resized.append(seq_resize)
     return seq_resized
 
-
-# In[ ]:
-
-
 #resize original sequences to 80bp
 seq_resized_80=[]
 Resized_80(seq_uni,seq_resized_80)
 pass
-
-
-# In[ ]:
 
 
 #resize original sequences to 135bp
@@ -211,16 +125,10 @@ Resized(seq_uni,seq_resized)
 pass
 
 
-# In[ ]:
-
-
 #resize original sequences and encode them
 seq_resize_encoded=[]
 Equal_Len(seq_uni,seq_resize_encoded)
 pass
-
-
-# In[43]:
 
 
 #select only sequences of length 110 and corresponding scores 
@@ -232,16 +140,10 @@ for i in range(len(seq_uni)):
         score_uni_110.append(score_uni[i])
 
 
-# In[ ]:
-
-
 #create reference sequences for shap out of firts 1000 seqs
 reference_seq=[]
 Equal_Len(seq_uni[:1000],reference_seq)
 pass
-
-
-# In[21]:
 
 
 #shap initiation
@@ -251,14 +153,8 @@ def standard_combine_mult_and_diffref(mult,orig_inp,bg_data):
     return to_return
 
 
-# In[22]:
-
-
 #create reference sequences
 black_reference_images=np.array(reference_seq)
-
-
-# In[ ]:
 
 
 #calculate shap scores for 1000 sequences
@@ -268,21 +164,6 @@ outputtarget=tf.reduce_sum(x,axis=0,keepdims=True)
 black_reference_explainer=shap.TFDeepExplainer((model.input,outputtarget),black_reference_images,combine_mult_and_diffref=standard_combine_mult_and_diffref)
 blackShapScores=black_reference_explainer.shap_values(np.array(seq_resize_encoded[1000:2000]),progress_message=100)
 scores.append(blackShapScores)
-
-
-# In[34]:
-
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
-plt.ion()
-
-import logomaker as lm
-
-
-# In[ ]:
 
 
 #select shap importances for base A in every seqeunce and every position, 
@@ -302,12 +183,6 @@ for i in tqdm.tqdm(range(135)):
         a_scores_means_positions.append(a_scores_mean)
 
 
-    
-
-
-# In[ ]:
-
-
 #select shap importances for base C in every seqeunce and every position, 
 #average the importances for each position in the sequence across all sequences,
 #result is stored avergaed across 1000 sequences shap score for C being at position 1, 2, ... and so on along the sequence
@@ -323,9 +198,6 @@ for i in tqdm.tqdm(range(135)):
     else:
         c_scores_mean=sum(c_scores)/len(c_scores)
         c_scores_means_positions.append(c_scores_mean)
-
-
-# In[ ]:
 
 
 #select shap importances for base G in every seqeunce and every position, 
@@ -345,9 +217,6 @@ for i in tqdm.tqdm(range(135)):
         g_scores_means_positions.append(g_scores_mean)
 
 
-# In[ ]:
-
-
 #select shap importances for base T in every seqeunce and every position, 
 #average the importances for each position in the sequence across all sequences,
 #result is stored avergaed across 1000 sequences shap score for T being at position 1, 2, ... and so on along the sequence
@@ -365,14 +234,9 @@ for i in tqdm.tqdm(range(135)):
         t_scores_means_positions.append(t_scores_mean)
 
 
-# In[703]:
-
 
 #make an array of lists that store importances for each base
 array_scores = np.array( [ a_scores_means_positions ,c_scores_means_positions , g_scores_means_positions,t_scores_means_positions])
-
-
-# In[ ]:
 
 
 #plot the array into a matrix 
@@ -392,11 +256,8 @@ ax.set_yticks(np.arange(len(label)), labels=label)
 fig.tight_layout()
 
 
-# In[1030]:
-
 
 #code to generate random sequences of certain lengths
-import numpy as np
 seq_length = 80
 r=[]
 for i in range (1000):
@@ -404,8 +265,6 @@ for i in range (1000):
 
 
 # EXPERIMENT EXPRESSION VS REB1 POSITION
-
-# In[ ]:
 
 
 #insert reb1 on every position in a 80 bp sequence, make model to predict corresponding expressions, 
@@ -427,10 +286,6 @@ for i in range(80):
             
     test_batches=DNAseqload(ran_sequences_reb1)
     means_exp.append(np.mean(model.predict(test_batches,verbose=2)))
-    
-
-
-# In[106]:
 
 
 #select random sequences where reb1 is at position 33 
@@ -440,10 +295,6 @@ for seq in ran_sequences:
         final_string=seq[:i]+'CGGGTAA' + seq[i:]
         ran_sequences_reb1_pos33.append(final_string)
 
-        
-
-
-# In[601]:
 
 
 #select random sequences where reb1 is at position 0 
@@ -454,16 +305,10 @@ for seq in ran_sequences:
         ran_sequences_reb1_pos0.append(final_string)
 
 
-# In[ ]:
-
-
 #prepare sequences for shap where reb1 is at position 33
 list_of_shap_seq_reb1_pos33=[]
 Equal_Len(ran_sequences_reb1_pos33,list_of_shap_seq_reb1_pos33)
 pass
-
-
-# In[602]:
 
 
 #prepare sequences for shap where reb1 is at position 0
@@ -472,18 +317,12 @@ Equal_Len(ran_sequences_reb1_pos0,list_of_shap_seq_reb1_pos0)
 pass
 
 
-# In[744]:
-
-
 #plot average expression levels as a function of reb1 pisition
 plt.plot(means_exp)
 plt.ylabel('Expression level',fontsize=14)
 plt.xlabel('Position of Reb1',fontsize=14)
 plt.title('Expression levels as a function of Reb1 position in RANDOM sequences',fontsize=14)
 plt.show()
-
-
-# In[ ]:
 
 
 #find shap scores for random sequences where reb1 is in position 33
@@ -495,16 +334,10 @@ blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_seq_
 imp_scores_reb1_pos33.append(blackShapScores)
 
 
-# In[621]:
-
-
 #draw the corresponding logo
 logo=lm.Logo(av_im_scores_random(imp_scores_reb1_pos33,list_of_shap_seq_reb1_pos33))
 logo.highlight_position_range(57,63,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Reb1 in 1000 random sequences at position 33',fontsize=14)
-
-
-# In[229]:
 
 
 for i in range(5):
@@ -517,9 +350,6 @@ for i in range(5):
     logo.ax.set_title('Logo of Reb1 in random sequences at position 33',fontsize=14)
 
 
-# In[603]:
-
-
 #importances for random sequences where reb1 at position 0
 imp_scores_reb1_pos0=[]
 x=model.output
@@ -527,9 +357,6 @@ outputtarget=tf.reduce_sum(x,axis=0,keepdims=True)
 black_reference_explainer=shap.TFDeepExplainer((model.input,outputtarget),black_reference_images,combine_mult_and_diffref=standard_combine_mult_and_diffref)
 blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_seq_reb1_pos0),progress_message=100)
 imp_scores_reb1_pos0.append(blackShapScores)
-
-
-# In[633]:
 
 
 #function to generate a matrix for average logo (averages importances across all sequences)
@@ -546,16 +373,11 @@ def av_im_scores_random(importances,sequences):
     return av_df
 
 
-# In[615]:
-
-
 av_im_scores_random(imp_scores_reb1_pos0,list_of_shap_seq_reb1_pos0)
 logo=lm.Logo(av_df)
 logo.highlight_position_range(24,30,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Reb1 in 1000 random sequences at position 0',fontsize=14)
 
-
-# In[116]:
 
 
 #cuts the sequences to 80 bp
@@ -567,7 +389,6 @@ for i in range(len(data_uni)):
         score_uni_cut.append(score_uni[i])
 
 
-# In[117]:
 
 
 #select seqs withg reb1 out of the cut sequences
@@ -579,8 +400,6 @@ for idx,seq in enumerate(seq_uni_cut):
         scores_uni_cut_reb1.append(score_uni_cut[idx])
         
 
-
-# In[ ]:
 
 
 #the same experiment of reb1 insertion but with real sequences
@@ -596,7 +415,6 @@ for i in range(80):
         
 
 
-# In[230]:
 
 
 plt.plot(mean_scores)
@@ -606,7 +424,7 @@ plt.title('Expression levels as a function of Reb1 position in REAL sequences')
 plt.show()
 
 
-# In[342]:
+
 
 
 #find real seqs were reb1 is at position 0
@@ -616,16 +434,12 @@ for seq in seq_uni_cut_reb1:
             real_sequences_reb1_pos0.append(seq)
 
 
-# In[ ]:
-
 
 #prepare the seqs for shap
 list_of_shap_realseq_reb1_pos0=[]
 Equal_Len(real_sequences_reb1_pos0,list_of_shap_realseq_reb1_pos0)
 pass
 
-
-# In[627]:
 
 
 #find scores
@@ -637,16 +451,12 @@ blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_real
 imp_scores_realseq_reb1_pos0.append(blackShapScores)
 
 
-# In[642]:
-
 
 #plot the average logo 
 logo=lm.Logo(av_im_scores_random(imp_scores_realseq_reb1_pos0,list_of_shap_realseq_reb1_pos0))
 logo.highlight_position_range(27,33,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Reb1 in 95 REAL sequences at position 0',fontsize=14)
 
-
-# In[348]:
 
 
 for i in range(5):
@@ -661,24 +471,14 @@ for i in range(5):
 
 # The same process as above but for sequences were reb1 is at position 1
 
-# In[400]:
-
-
 real_sequences_reb1_pos1=[]
 for seq in seq_uni_cut_reb1:
         if seq[1:8]=='CGGGTAA':
             real_sequences_reb1_pos1.append(seq)
 
-
-# In[401]:
-
-
 list_of_shap_realseq_reb1_pos1=[]
 Equal_Len(real_sequences_reb1_pos1,list_of_shap_realseq_reb1_pos1)
 pass
-
-
-# In[402]:
 
 
 imp_scores_realseq_reb1_pos1=[]
@@ -689,16 +489,9 @@ blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_real
 imp_scores_realseq_reb1_pos1.append(blackShapScores)
 
 
-# In[641]:
-
-
 logo=lm.Logo(av_im_scores_random(imp_scores_realseq_reb1_pos1,list_of_shap_realseq_reb1_pos1))
 logo.highlight_position_range(28,34,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Reb1 in 75 REAL sequences at position 1',fontsize=14)
-
-
-# In[404]:
-
 
 for i in range(5):
     df = pd.DataFrame(imp_scores_realseq_reb1_pos1[0][0][i], columns=['A',  'C','G','T'])
@@ -713,9 +506,6 @@ for i in range(5):
 # EXPERIMENT RAP1 POSITION VS EXPRESSION
 
 # The same experiment, method and functions but for rap1 motif
-
-# In[ ]:
-
 
 means_exp_rap1=[]
 for i in range(80):
@@ -736,17 +526,11 @@ for i in range(80):
     means_exp_rap1.append(np.mean(model.predict(test_batches,verbose=2)))
 
 
-# In[745]:
-
-
 plt.plot(means_exp_rap1)
 plt.ylabel('Expression level',fontsize=14)
 plt.xlabel('Position of Rap1',fontsize=14)
 plt.title('Expression levels as a function of Rap1 position in 1000 RANDOM sequences',fontsize=14)
 plt.show()
-
-
-# In[ ]:
 
 
 i=33
@@ -755,25 +539,16 @@ for seq in ran_sequences:
         final_string=seq[:i]+'CGGGTAA' + seq[i:]
         ran_sequences_reb1_pos33.append(final_string)
 
-
-# In[353]:
-
-
 ran_sequences_rap1_pos0=[]
 for seq in ran_sequences:
         final_string='TGTATGGGTG' + seq
         ran_sequences_rap1_pos0.append(final_string)
 
 
-# In[ ]:
-
-
 list_of_shap_seq_rap1_pos0=[]
 Equal_Len(ran_sequences_rap1_pos0,list_of_shap_seq_rap1_pos0)
 pass
 
-
-# In[355]:
 
 
 imp_scores_rap1_pos0=[]
@@ -784,15 +559,10 @@ blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_seq_
 imp_scores_rap1_pos0.append(blackShapScores)
 
 
-# In[637]:
-
 
 logo=lm.Logo(av_im_scores_random(imp_scores_rap1_pos0,list_of_shap_seq_rap1_pos0))
 logo.highlight_position_range(22,31,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Rap1 in 1000 random sequences at position 0',fontsize=14)
-
-
-# In[363]:
 
 
 for i in range(5):
@@ -804,25 +574,14 @@ for i in range(5):
     logo.highlight_position_range(22,31,alpha=0.3,color='lightblue',edgecolor='black')
     logo.ax.set_title('Logo of Rap1 in random sequences at position 0',fontsize=14)
 
-
-# In[360]:
-
-
 ran_sequences_rap1_pos75=[]
 for seq in ran_sequences:
         final_string=seq[:75]+'TGTATGGGTG' + seq[75:]
         ran_sequences_rap1_pos75.append(final_string)
 
-
-# In[ ]:
-
-
 list_of_shap_seq_rap1_pos75=[]
 Equal_Len(ran_sequences_rap1_pos75,list_of_shap_seq_rap1_pos75)
 pass
-
-
-# In[362]:
 
 
 imp_scores_rap1_pos75=[]
@@ -833,15 +592,10 @@ blackShapScores=black_reference_explainer.shap_values(np.array(list_of_shap_seq_
 imp_scores_rap1_pos75.append(blackShapScores)
 
 
-# In[640]:
-
-
 logo=lm.Logo(av_im_scores_random(imp_scores_rap1_pos75,list_of_shap_seq_rap1_pos75))
 logo.highlight_position_range(97,106,alpha=0.3,color='lightblue',edgecolor='black')
 logo.ax.set_title('Average Logo of Rap1 in 1000 random sequences at position 75',fontsize=14)
 
-
-# In[365]:
 
 
 for i in range(5):
@@ -854,7 +608,6 @@ for i in range(5):
     logo.ax.set_title('Logo of Rap1 in random sequences at position 75',fontsize=14)
 
 
-# In[266]:
 
 
 seq_uni_cut_rap1=[]
@@ -1311,29 +1064,6 @@ test_batches=DNAseqload(ran_sequences)
 seq_no_motif=np.mean(model.predict(test_batches,verbose=2))
 
 
-# In[668]:
-
-
-expr_2motifs_av
-
-
-# In[669]:
-
-
-expr_reb1motif_av
-
-
-# In[670]:
-
-
-expr_rap1motif_av
-
-
-# In[671]:
-
-
-seq_no_motif
-
 
 # EXPERIMENT POSITION OF MOTIF PAIR UP TO 20 BASES APART ACROSS SEQUENCES (15 TO 65)
 
@@ -1557,17 +1287,10 @@ plt.ylabel('Rap1')
 plt.xlabel('Reb1')
 sn.set()
 s=sn.heatmap(df_motif_spacing)
-#s.set(xlabel='Reb1 motif position in 1000 random sequences', ylabel='Rap1 motif position in 1000 random sequences',title='Average association between Reb1 and Rap1 spacing and expression level across 1000 random sequences')
-#sn.set(font_scale = 0.9)
 s.set_xlabel('Reb1 motif position in 1000 random sequences', fontsize = 17)
 s.set_ylabel('Rap1 motif position in 1000 random sequences', fontsize = 17)
 s.set_title('Average association between Reb1 and Rap1 spacing and expression level across 1000 random sequences', fontsize = 17)
 
-
-# In[1006]:
-
-
-df_motif_spacing
 
 
 # The same spacing experiment, but for the different motifs. Also, spacing method is different. Here, I take the middle of the motif as index and substitute it into the sequences, keeping the lenght constant, instead of inserting motifd in the sequence and elongating them like in the experiment above
@@ -1583,13 +1306,12 @@ Fkh1='GTAAACA'
 
 
 means_spacing_nested2=[]
-#means_idx_nested2=[]
 Ace2='CCAGC'
 Fkh1='GTAAACA'
 #fkh1
 for i in tqdm.tqdm(range(4,77)):
     means_spacing2=[]
-    #means_idx2=[]
+
     #ace2
     for k in tqdm.tqdm(range(3,78)):
         ace2_fkh1_seqs=[]
@@ -1607,10 +1329,10 @@ for i in tqdm.tqdm(range(4,77)):
          
 
         means_spacing2.append(ace2_fkh1_seqs)
-        #means_idx2.append(k)
+ 
         
     means_spacing_nested2.append(means_spacing2)
-   # means_idx_nested2.append(means_idx2)
+
 
 
 # In[993]:
@@ -1661,19 +1383,8 @@ df.columns =ace2_labels
 df.index =fkh1_labels
 
 
-# In[1016]:
-
-
-df
-
-
-# In[1015]:
-
-
 df=df.replace({1: np.nan})
 
-
-# In[1019]:
 
 
 s=sn.heatmap(df)
@@ -1681,7 +1392,6 @@ s.set_xlabel('Ace2 motif position in 1000 random sequences', fontsize = 17)
 s.set_ylabel('Fkh1 motif position in 1000 random sequences', fontsize = 17)
 
 
-# In[ ]:
 
 
 #generate sequences and find predictions  for individual motifs and plot its positioning against expression
@@ -1696,11 +1406,6 @@ for i in range(3,78):
     test_batches=DNAseqload(ran_sequences_ace2)
     means_exp_ace2.append(np.mean(model.predict(test_batches,verbose=2)))
 
-
-# In[ ]:
-
-
-means_exp_ace2
 
 
 # In[1027]:
@@ -1745,14 +1450,6 @@ plt.show()
 #fill diagonal with NaN, if needed
 np.fill_diagonal(df_motif_spacing.values, None)
 
-
-# In[559]:
-
-
-df_motif_spacing
-
-
-# In[711]:
 
 
 #find sequences and corresponding scores (this time, predicted by the model) out of original train sequences with rap1 motif and without 
